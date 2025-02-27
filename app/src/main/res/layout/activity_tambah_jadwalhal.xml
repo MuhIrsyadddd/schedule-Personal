@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:id="@+id/tambahJadwalRoot"
+    tools:context=".TambahJadwalhal">
+
+  <!-- Judul -->
+  <TextView
+      android:id="@+id/tvTitle"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Detail Agenda"
+      android:textStyle="bold"
+      android:textSize="18sp"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintBottom_toTopOf="@+id/etTitle"
+      android:layout_marginBottom="16dp"/>
+
+  <!-- Input Tambahkan Judul -->
+  <EditText
+      android:id="@+id/etTitle"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:hint="Tambahkan Judul"
+      android:background="@android:drawable/edit_text"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/tvTitle"
+      android:layout_marginBottom="16dp"/>
+
+  <!-- Input Start Date -->
+  <EditText
+      android:id="@+id/etStartDate"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:hint="Start Date"
+      android:background="@android:drawable/edit_text"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/etTitle"
+      android:layout_marginBottom="16dp"/>
+
+  <!-- Input Waktu -->
+  <EditText
+      android:id="@+id/etTimeStart"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:text="10.00"
+      android:background="@android:drawable/edit_text"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toStartOf="@id/etTimeEnd"
+      app:layout_constraintTop_toBottomOf="@id/etStartDate"
+      android:layout_marginEnd="8dp"
+      android:layout_weight="1"/>
+
+  <EditText
+      android:id="@+id/etTimeEnd"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:text="10.00"
+      android:background="@android:drawable/edit_text"
+      app:layout_constraintStart_toEndOf="@id/etTimeStart"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/etStartDate"
+      android:layout_weight="1"/>
+
+  <!-- Input Music -->
+  <EditText
+      android:id="@+id/etMusic"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:hint="Masukan Music Agendamu"
+      android:background="@android:drawable/edit_text"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/etTimeStart"
+      android:layout_marginTop="16dp"
+      android:layout_marginBottom="16dp"/>
+
+  <!-- Input Deskripsi -->
+  <EditText
+      android:id="@+id/etDescription"
+      android:layout_width="0dp"
+      android:layout_height="150dp"
+      android:hint="Masukan Deskripsi Agendamu"
+      android:background="@android:drawable/edit_text"
+      android:gravity="top"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/etMusic"
+      android:layout_marginBottom="16dp"/>
+
+  <!-- Tombol Done -->
+  <Button
+      android:id="@+id/btnDone"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:text="Done"
+      android:backgroundTint="#50E3C2"
+      android:textColor="@android:color/black"
+      android:textStyle="bold"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/etDescription"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
