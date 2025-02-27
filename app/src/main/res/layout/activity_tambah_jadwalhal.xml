@@ -53,8 +53,10 @@
       android:id="@+id/etTimeStart"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:text="10.00"
+      android:hint="Jam Mulai"
       android:background="@android:drawable/edit_text"
+      android:focusable="false"
+      android:clickable="true"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toStartOf="@id/etTimeEnd"
       app:layout_constraintTop_toBottomOf="@id/etStartDate"
@@ -65,12 +67,15 @@
       android:id="@+id/etTimeEnd"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:text="10.00"
+      android:hint="Jam Selesai"
       android:background="@android:drawable/edit_text"
+      android:focusable="false"
+      android:clickable="true"
       app:layout_constraintStart_toEndOf="@id/etTimeStart"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintTop_toBottomOf="@id/etStartDate"
       android:layout_weight="1"/>
+
 
   <!-- Input Music -->
   <EditText
