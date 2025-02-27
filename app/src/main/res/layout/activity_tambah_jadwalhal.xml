@@ -84,6 +84,8 @@
       android:layout_height="wrap_content"
       android:hint="Masukan Music Agendamu"
       android:background="@android:drawable/edit_text"
+      android:focusable="false"
+      android:clickable="true"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintTop_toBottomOf="@id/etTimeStart"
