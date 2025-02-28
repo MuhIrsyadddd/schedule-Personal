@@ -6,7 +6,6 @@ import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.widget.Button
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +19,7 @@ import java.util.Locale
 class TambahJadwalhal : AppCompatActivity() {
     private lateinit var database: JadwalDatabase
     private lateinit var etMusic: EditText
+    private var selectedMusicUri: Uri? = null  // Menyimpan URI yang dipilih
     private val REQUEST_CODE_PICK_AUDIO = 1
 
     @SuppressLint("MissingInflatedId")
@@ -48,7 +48,7 @@ class TambahJadwalhal : AppCompatActivity() {
             val startDate = etStartDate.text.toString()
             val timeStart = etTimeStart.text.toString()
             val timeEnd = etTimeEnd.text.toString()
-            val music = etMusic.text.toString()
+            val music = selectedMusicUri?.toString() ?: ""  // Simpan URI asli
             val description = etDescription.text.toString()
 
             if (title.isNotEmpty() && startDate.isNotEmpty()) {
@@ -57,7 +57,7 @@ class TambahJadwalhal : AppCompatActivity() {
                     startDate = startDate,
                     timeStart = timeStart,
                     timeEnd = timeEnd,
-                    music = music,
+                    music = music, // Simpan sebagai URI string
                     description = description
                 )
 
@@ -70,7 +70,6 @@ class TambahJadwalhal : AppCompatActivity() {
                 }
             }
         }
-
     }
 
     private fun showDatePickerDialog(etStartDate: EditText) {
@@ -102,19 +101,10 @@ class TambahJadwalhal : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_PICK_AUDIO && resultCode == RESULT_OK) {
-            data?.data?.let { uri -> etMusic.setText(getFileName(uri)) }
-        }
-    }
-
-    private fun getFileName(uri: Uri): String {
-        var fileName = "Unknown File"
-        val cursor = contentResolver.query(uri, null, null, null, null)
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val index = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (index != -1) fileName = it.getString(index)
+            data?.data?.let { uri ->
+                selectedMusicUri = uri
+                etMusic.setText(uri.toString()) // Menampilkan URI di EditText
             }
         }
-        return fileName
     }
 }

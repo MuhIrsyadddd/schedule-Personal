@@ -113,7 +113,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         val dateTimeString = "${jadwal.startDate} ${jadwal.timeStart}"
-        val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm", Locale("id", "ID")) // Sesuaikan dengan format yang digunakan di database
+        val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm", Locale("id", "ID"))
+
         val date = try {
             dateFormat.parse(dateTimeString)
         } catch (e: Exception) {
@@ -122,7 +123,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         date?.let {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, it.time, pendingIntent)
+            val currentTime = System.currentTimeMillis()
+
+            // Hanya jadwal di masa depan yang akan dijadwalkan notifikasinya
+            if (it.time > currentTime) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, it.time, pendingIntent)
+            }
         }
     }
 }
