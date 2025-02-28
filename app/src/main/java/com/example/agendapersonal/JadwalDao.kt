@@ -12,4 +12,7 @@ interface JadwalDao {
 
     @Query("SELECT * FROM jadwal ORDER BY startDate ASC")
     suspend fun getAllJadwal(): List<Jadwal>
+
+    @Query("DELETE FROM jadwal WHERE id = :id")
+    suspend fun deleteJadwal(id: Int)
 }
