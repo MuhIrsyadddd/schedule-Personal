@@ -1,6 +1,9 @@
 package com.example.agendapersonal
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -15,8 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
@@ -82,19 +84,45 @@ class MainActivity : AppCompatActivity() {
             val jadwalList = database.jadwalDao().getAllJadwal()
             adapter.updateData(jadwalList)
 
-            val tvDescription: TextView = findViewById(R.id.tvDescription)
-            if (jadwalList.isNotEmpty()) {
-                tvDescription.visibility = View.GONE
-            } else {
-                tvDescription.visibility = View.VISIBLE
+            for (jadwal in jadwalList) {
+                scheduleNotification(this@MainActivity, jadwal)
             }
+
+            val tvDescription: TextView = findViewById(R.id.tvDescription)
+            tvDescription.visibility = if (jadwalList.isNotEmpty()) View.GONE else View.VISIBLE
         }
     }
+
 
     private fun deleteJadwal(jadwal: Jadwal) {
         lifecycleScope.launch {
             database.jadwalDao().deleteJadwal(jadwal.id)
             loadJadwal()
+        }
+    }
+
+    private fun scheduleNotification(context: Context, jadwal: Jadwal) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("title", jadwal.title)
+            putExtra("description", jadwal.description)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, jadwal.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val dateTimeString = "${jadwal.startDate} ${jadwal.timeStart}"
+        val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm", Locale("id", "ID")) // Sesuaikan dengan format yang digunakan di database
+        val date = try {
+            dateFormat.parse(dateTimeString)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+
+        date?.let {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, it.time, pendingIntent)
         }
     }
 }
