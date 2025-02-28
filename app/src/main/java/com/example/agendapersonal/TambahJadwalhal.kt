@@ -63,10 +63,14 @@ class TambahJadwalhal : AppCompatActivity() {
 
                 lifecycleScope.launch {
                     database.jadwalDao().insertJadwal(jadwal)
+
+                    // Kirim sinyal ke MainActivity bahwa data sudah diperbarui
+                    setResult(RESULT_OK)
                     finish()
                 }
             }
         }
+
     }
 
     private fun showDatePickerDialog(etStartDate: EditText) {

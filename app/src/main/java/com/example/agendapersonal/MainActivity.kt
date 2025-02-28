@@ -72,6 +72,11 @@ class MainActivity : AppCompatActivity() {
         loadJadwal()
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadJadwal() // Memuat ulang data setiap kali aktivitas kembali ke tampilan utama
+    }
+
     private fun loadJadwal() {
         lifecycleScope.launch {
             val jadwalList = database.jadwalDao().getAllJadwal()
@@ -85,7 +90,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun deleteJadwal(jadwal: Jadwal) {
         lifecycleScope.launch {
