@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -47,7 +48,6 @@
       app:layout_constraintTop_toBottomOf="@id/etTitle"
       android:layout_marginBottom="16dp"/>
 
-
   <!-- Input Waktu -->
   <EditText
       android:id="@+id/etTimeStart"
@@ -76,21 +76,36 @@
       app:layout_constraintTop_toBottomOf="@id/etStartDate"
       android:layout_weight="1"/>
 
-
-  <!-- Input Music -->
-  <EditText
-      android:id="@+id/etMusic"
+  <!-- Tombol Pilih Musik -->
+  <LinearLayout
+      android:id="@+id/btnSelectMusic"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:hint="Masukan Music Agendamu"
+      android:orientation="horizontal"
+      android:padding="10dp"
       android:background="@android:drawable/edit_text"
-      android:focusable="false"
       android:clickable="true"
+      android:focusable="true"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etTimeStart"
-      android:layout_marginTop="16dp"
-      android:layout_marginBottom="16dp"/>
+      app:layout_constraintTop_toBottomOf="@id/etTimeEnd"
+      android:layout_marginBottom="16dp">
+
+    <ImageView
+        android:id="@+id/ivMusicIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@android:drawable/ic_lock_silent_mode"
+        android:layout_marginEnd="8dp"
+        app:tint="@android:color/black" />
+
+    <TextView
+        android:id="@+id/tvSelectedMusic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Default alarm"
+        android:textSize="16sp"/>
+  </LinearLayout>
 
   <!-- Input Deskripsi -->
   <EditText
@@ -102,7 +117,7 @@
       android:gravity="top"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etMusic"
+      app:layout_constraintTop_toBottomOf="@id/btnSelectMusic"
       android:layout_marginBottom="16dp"/>
 
   <!-- Tombol Done -->

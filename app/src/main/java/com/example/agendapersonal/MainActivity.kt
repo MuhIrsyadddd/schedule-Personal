@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         loadJadwal()
+        scheduleNotification(this) // Menjadwalkan notifikasi setiap menit
     }
 
     override fun onResume() {
@@ -85,14 +86,13 @@ class MainActivity : AppCompatActivity() {
             adapter.updateData(jadwalList)
 
             for (jadwal in jadwalList) {
-                scheduleNotification(this@MainActivity, jadwal)
+                scheduleNotificationForJadwal(this@MainActivity, jadwal)
             }
 
             val tvDescription: TextView = findViewById(R.id.tvDescription)
             tvDescription.visibility = if (jadwalList.isNotEmpty()) View.GONE else View.VISIBLE
         }
     }
-
 
     private fun deleteJadwal(jadwal: Jadwal) {
         lifecycleScope.launch {
@@ -101,7 +101,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleNotification(context: Context, jadwal: Jadwal) {
+    private fun scheduleNotification(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val interval = 60 * 1000L // 1 menit
+        val triggerTime = System.currentTimeMillis() + interval
+
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, triggerTime, interval, pendingIntent)
+    }
+
+    private fun scheduleNotificationForJadwal(context: Context, jadwal: Jadwal) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             putExtra("title", jadwal.title)
