@@ -1,121 +1,188 @@
 package com.example.agendapersonal
 
 import android.annotation.SuppressLint
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import android.app.*
+import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
-import android.widget.*
+import android.widget.Button
+import android.widget.NumberPicker
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
+import xyz.aprildown.ultimateringtonepicker.RingtonePickerActivity
+import xyz.aprildown.ultimateringtonepicker.UltimateRingtonePicker
+import java.util.Calendar
 
 class TambahJadwalhal : AppCompatActivity() {
-    private lateinit var database: JadwalDatabase
-    private lateinit var tvSelectedMusic: TextView
-    private var selectedMusicUri: Uri? = null
 
-    @SuppressLint("MissingInflatedId")
+    private lateinit var btnPilihRingtone: Button
+    private lateinit var btnSetAlarm: Button
+    private lateinit var btnOpenCalendar: Button
+    private var selectedRingtoneUri: Uri? = null
+    private lateinit var db: AppDatabase
+    private lateinit var numberPickerHour: NumberPicker
+    private lateinit var numberPickerMinute: NumberPicker
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_tambah_jadwalhal)
 
-        database = JadwalDatabase.getDatabase(this)
+        db = AppDatabase.getDatabase(this)
 
-        val etTitle = findViewById<EditText>(R.id.etTitle)
-        val etStartDate = findViewById<EditText>(R.id.etStartDate)
-        val etTimeStart = findViewById<EditText>(R.id.etTimeStart)
-        val etTimeEnd = findViewById<EditText>(R.id.etTimeEnd)
-        val etDescription = findViewById<EditText>(R.id.etDescription)
-        val btnSelectMusic = findViewById<LinearLayout>(R.id.btnSelectMusic)
-        tvSelectedMusic = findViewById(R.id.tvSelectedMusic)
-        val btnDone = findViewById<Button>(R.id.btnDone)
+        numberPickerHour = findViewById(R.id.numberPickerHour)
+        numberPickerMinute = findViewById(R.id.numberPickerMinute)
+        btnPilihRingtone = findViewById(R.id.btnPilihRingtone)
+        btnSetAlarm = findViewById(R.id.btnSetAlarm)
+        btnOpenCalendar = findViewById(R.id.btnOpenCalendar)
 
-        etStartDate.setOnClickListener { showDatePickerDialog(etStartDate) }
-        etTimeStart.setOnClickListener { showTimePickerDialog(etTimeStart) }
-        etTimeEnd.setOnClickListener { showTimePickerDialog(etTimeEnd) }
+        numberPickerHour.minValue = 0
+        numberPickerHour.maxValue = 23
 
-        btnSelectMusic.setOnClickListener {
-            selectMusicFile()
-        }
+        numberPickerMinute.minValue = 0
+        numberPickerMinute.maxValue = 59
 
-        btnDone.setOnClickListener {
-            val title = etTitle.text.toString()
-            val startDate = etStartDate.text.toString()
-            val timeStart = etTimeStart.text.toString()
-            val timeEnd = etTimeEnd.text.toString()
-            val description = etDescription.text.toString()
-            val musicPath = selectedMusicUri?.toString() ?: ""
+        loadSavedAlarm()
 
-            if (title.isNotEmpty() && startDate.isNotEmpty()) {
-                val jadwal = Jadwal(
-                    title = title,
-                    startDate = startDate,
-                    timeStart = timeStart,
-                    timeEnd = timeEnd,
-                    music = musicPath,
-                    description = description
+        val settings = UltimateRingtonePicker.Settings(
+            systemRingtonePicker = UltimateRingtonePicker.SystemRingtonePicker(
+                customSection = UltimateRingtonePicker.SystemRingtonePicker.CustomSection(),
+                defaultSection = UltimateRingtonePicker.SystemRingtonePicker.DefaultSection(),
+                ringtoneTypes = listOf(
+                    RingtoneManager.TYPE_RINGTONE,
+                    RingtoneManager.TYPE_NOTIFICATION,
+                    RingtoneManager.TYPE_ALARM
                 )
+            ),
+            deviceRingtonePicker = UltimateRingtonePicker.DeviceRingtonePicker(
+                deviceRingtoneTypes = listOf(
+                    UltimateRingtonePicker.RingtoneCategoryType.All,
+                    UltimateRingtonePicker.RingtoneCategoryType.Artist,
+                    UltimateRingtonePicker.RingtoneCategoryType.Album,
+                    UltimateRingtonePicker.RingtoneCategoryType.Folder
+                )
+            )
+        )
 
-                lifecycleScope.launch {
-                    database.jadwalDao().insertJadwal(jadwal)
-                    setResult(RESULT_OK)
-                    finish()
+        val ringtoneLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                val ringtones = RingtonePickerActivity.getPickerResult(result.data!!)
+                if (ringtones.isNotEmpty()) {
+                    selectedRingtoneUri = ringtones[0].uri
+                    btnPilihRingtone.text = "Nada Dering Dipilih"
                 }
-            } else {
-                Toast.makeText(this, "Judul dan Tanggal Mulai tidak boleh kosong", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        btnPilihRingtone.setOnClickListener {
+            ringtoneLauncher.launch(
+                RingtonePickerActivity.getIntent(
+                    context = this,
+                    settings = settings,
+                    windowTitle = "Pilih Nada Dering"
+                )
+            )
+        }
+
+        btnSetAlarm.setOnClickListener {
+            val hour = numberPickerHour.value
+            val minute = numberPickerMinute.value
+            val selectedDate = btnOpenCalendar.text.toString()
+
+            if (selectedDate == "Pilih Tanggal") {
+                Toast.makeText(this, "Silakan pilih tanggal!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (selectedRingtoneUri == null) {
+                Toast.makeText(this, "Silakan pilih nada dering!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            setAlarm(hour, minute, selectedDate, selectedRingtoneUri!!)
+            saveAlarm(hour, minute, selectedRingtoneUri!!.toString(), selectedDate)
+
+            Toast.makeText(this, "Alarm disetel untuk $selectedDate $hour:$minute", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+
+
+
+        btnOpenCalendar.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val datePickerDialog = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+                val selectedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+                btnOpenCalendar.text = selectedDate
+            }, year, month, day)
+
+            datePickerDialog.show()
         }
     }
 
-    private fun showDatePickerDialog(etStartDate: EditText) {
+    @SuppressLint("ScheduleExactAlarm")
+    private fun setAlarm(hour: Int, minute: Int, tanggal: String, ringtoneUri: Uri) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("RINGTONE_URI", ringtoneUri.toString())
+        }
+
         val calendar = Calendar.getInstance()
-        DatePickerDialog(this, { _, year, month, dayOfMonth ->
-            val selectedDate = Calendar.getInstance()
-            selectedDate.set(year, month, dayOfMonth)
-            val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
-            etStartDate.setText(dateFormat.format(selectedDate.time))
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        val dateParts = tanggal.split("/") // Format: dd/MM/yyyy
+        if (dateParts.size == 3) {
+            val day = dateParts[0].toInt()
+            val month = dateParts[1].toInt() - 1 // Karena bulan di Calendar mulai dari 0
+            val year = dateParts[2].toInt()
+
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, day)
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
+            calendar.set(Calendar.MINUTE, minute)
+            calendar.set(Calendar.SECOND, 0)
+        } else {
+            Toast.makeText(this, "Format tanggal salah!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, (hour * 60 + minute), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
 
-    private fun showTimePickerDialog(editText: EditText) {
-        val calendar = Calendar.getInstance()
-        val timePickerDialog = TimePickerDialog(this, { _, hour, minute ->
-            val formattedTime = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
-            editText.setText(formattedTime)
-        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true)
-        timePickerDialog.show()
+
+    private fun saveAlarm(hour: Int, minute: Int, ringtoneUri: String, tanggal: String) {
+        lifecycleScope.launch {
+            db.alarmDao().insertAlarm(AlarmData(hour = hour, minute = minute, ringtoneUri = ringtoneUri, tanggal = tanggal))
+        }
     }
 
-    private val selectMusicLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK && result.data != null) {
-                selectedMusicUri = result.data!!.data
-                tvSelectedMusic.text = getFileName(selectedMusicUri!!)
+
+    private fun loadSavedAlarm() {
+        lifecycleScope.launch {
+            val lastAlarm = db.alarmDao().getLatestAlarm()
+            if (lastAlarm != null) {
+                runOnUiThread {
+                    numberPickerHour.value = lastAlarm.hour
+                    numberPickerMinute.value = lastAlarm.minute
+                    selectedRingtoneUri = Uri.parse(lastAlarm.ringtoneUri)
+                    btnPilihRingtone.text = "Nada Dering Dipilih"
+                }
             }
         }
-
-    private fun selectMusicFile() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "audio/*"
-        }
-        selectMusicLauncher.launch(intent)
-    }
-
-    private fun getFileName(uri: Uri): String {
-        var name = "Unknown"
-        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (cursor.moveToFirst() && nameIndex != -1) {
-                name = cursor.getString(nameIndex)
-            }
-        }
-        return name
     }
 }

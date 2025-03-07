@@ -1,136 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:id="@+id/tambahJadwalRoot"
-    tools:context=".TambahJadwalhal">
+    tools:context=".halamanbarunih"
+    android:padding="16dp">
 
-  <!-- Judul -->
-  <TextView
-      android:id="@+id/tvTitle"
+  <Button
+      android:id="@+id/btnOpenCalendar"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="Detail Agenda"
-      android:textStyle="bold"
-      android:textSize="18sp"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent"
-      app:layout_constraintBottom_toTopOf="@+id/etTitle"
-      android:layout_marginBottom="16dp"/>
-
-  <!-- Input Tambahkan Judul -->
-  <EditText
-      android:id="@+id/etTitle"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:hint="Tambahkan Judul"
-      android:background="@android:drawable/edit_text"
+      android:text="Pilih Tanggal"
+      app:layout_constraintBottom_toTopOf="@id/numberPickerHour"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/tvTitle"
-      android:layout_marginBottom="16dp"/>
+      android:layout_marginBottom="20dp"/>
 
-  <!-- Input Start Date -->
-  <EditText
-      android:id="@+id/etStartDate"
-      android:layout_width="0dp"
+  <!-- NumberPicker untuk Jam -->
+  <NumberPicker
+      android:id="@+id/numberPickerHour"
+      android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:hint="Start Date"
-      android:background="@android:drawable/edit_text"
-      android:focusable="false"
-      android:clickable="true"
+      app:layout_constraintTop_toTopOf="@+id/btnOpenCalendar"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"/>
+
+  <!-- NumberPicker untuk Menit -->
+  <NumberPicker
+      android:id="@+id/numberPickerMinute"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      app:layout_constraintTop_toBottomOf="@id/numberPickerHour"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etTitle"
-      android:layout_marginBottom="16dp"/>
+      android:layout_marginTop="20dp" />
 
-  <!-- Input Waktu -->
-  <EditText
-      android:id="@+id/etTimeStart"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:hint="Jam Mulai"
-      android:background="@android:drawable/edit_text"
-      android:focusable="false"
-      android:clickable="true"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toStartOf="@id/etTimeEnd"
-      app:layout_constraintTop_toBottomOf="@id/etStartDate"
-      android:layout_marginEnd="8dp"
-      android:layout_weight="1"/>
-
-  <EditText
-      android:id="@+id/etTimeEnd"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:hint="Jam Selesai"
-      android:background="@android:drawable/edit_text"
-      android:focusable="false"
-      android:clickable="true"
-      app:layout_constraintStart_toEndOf="@id/etTimeStart"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etStartDate"
-      android:layout_weight="1"/>
-
-  <!-- Tombol Pilih Musik -->
-  <LinearLayout
-      android:id="@+id/btnSelectMusic"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:orientation="horizontal"
-      android:padding="10dp"
-      android:background="@android:drawable/edit_text"
-      android:clickable="true"
-      android:focusable="true"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etTimeEnd"
-      android:layout_marginBottom="16dp">
-
-    <ImageView
-        android:id="@+id/ivMusicIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@android:drawable/ic_lock_silent_mode"
-        android:layout_marginEnd="8dp"
-        app:tint="@android:color/black" />
-
-    <TextView
-        android:id="@+id/tvSelectedMusic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Default alarm"
-        android:textSize="16sp"/>
-  </LinearLayout>
-
-  <!-- Input Deskripsi -->
-  <EditText
-      android:id="@+id/etDescription"
-      android:layout_width="0dp"
-      android:layout_height="150dp"
-      android:hint="Masukan Deskripsi Agendamu"
-      android:background="@android:drawable/edit_text"
-      android:gravity="top"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/btnSelectMusic"
-      android:layout_marginBottom="16dp"/>
-
-  <!-- Tombol Done -->
   <Button
-      android:id="@+id/btnDone"
-      android:layout_width="0dp"
+      android:id="@+id/btnPilihRingtone"
+      android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="Done"
-      android:backgroundTint="#50E3C2"
-      android:textColor="@android:color/black"
-      android:textStyle="bold"
+      android:text="Pilih Nada Dering"
+      app:layout_constraintTop_toBottomOf="@id/numberPickerMinute"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/etDescription"/>
+      android:layout_marginTop="20dp"/>
+
+  <Button
+      android:id="@+id/btnSetAlarm"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Setel Alarm"
+      app:layout_constraintTop_toBottomOf="@id/btnPilihRingtone"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      android:layout_marginTop="20dp"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
