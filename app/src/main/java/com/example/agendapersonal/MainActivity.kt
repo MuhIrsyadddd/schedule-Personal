@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAlarms() {
         lifecycleScope.launch {
-            val alarmList = database.alarmDao().getAllAlarms()  // Mengambil semua data
+            val alarmList = database.alarmDao().getAllAlarms()
             alarmAdapter = AlarmAdapter(alarmList)
             recyclerView.adapter = alarmAdapter
         }
