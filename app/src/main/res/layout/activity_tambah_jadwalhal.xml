@@ -5,15 +5,46 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".halamanbarunih"
+    tools:context=".TambahJadwalhal"
     android:padding="16dp">
 
+  <!-- Kolom Judul Jadwal -->
+  <EditText
+      android:id="@+id/etJudulJadwal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Masukkan Judul Jadwal"
+      android:textSize="16sp"
+      android:padding="10dp"
+      android:background="@android:drawable/editbox_background"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      android:layout_marginBottom="10dp"/>
+
+  <!-- Kolom Deskripsi Jadwal -->
+  <EditText
+      android:id="@+id/etDeskripsiJadwal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Masukkan Deskripsi Jadwal"
+      android:textSize="14sp"
+      android:padding="10dp"
+      android:background="@android:drawable/editbox_background"
+      android:inputType="textMultiLine"
+      android:minHeight="100dp"
+      app:layout_constraintTop_toBottomOf="@id/etJudulJadwal"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      android:layout_marginBottom="20dp"/>
+
+  <!-- Tombol Pilih Tanggal -->
   <Button
       android:id="@+id/btnOpenCalendar"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:text="Pilih Tanggal"
-      app:layout_constraintBottom_toTopOf="@id/numberPickerHour"
+      app:layout_constraintTop_toBottomOf="@id/etDeskripsiJadwal"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       android:layout_marginBottom="20dp"/>
@@ -23,7 +54,7 @@
       android:id="@+id/numberPickerHour"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      app:layout_constraintTop_toTopOf="@+id/btnOpenCalendar"
+      app:layout_constraintTop_toBottomOf="@id/btnOpenCalendar"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -37,6 +68,7 @@
       app:layout_constraintEnd_toEndOf="parent"
       android:layout_marginTop="20dp" />
 
+  <!-- Tombol Pilih Nada Dering -->
   <Button
       android:id="@+id/btnPilihRingtone"
       android:layout_width="wrap_content"
@@ -47,6 +79,7 @@
       app:layout_constraintEnd_toEndOf="parent"
       android:layout_marginTop="20dp"/>
 
+  <!-- Tombol Setel Alarm -->
   <Button
       android:id="@+id/btnSetAlarm"
       android:layout_width="wrap_content"
@@ -56,6 +89,5 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       android:layout_marginTop="20dp"/>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

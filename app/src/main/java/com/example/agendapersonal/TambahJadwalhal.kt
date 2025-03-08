@@ -7,9 +7,7 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Button
-import android.widget.NumberPicker
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +26,8 @@ class TambahJadwalhal : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var numberPickerHour: NumberPicker
     private lateinit var numberPickerMinute: NumberPicker
+    private lateinit var etJudulJadwal: EditText
+    private lateinit var etDeskripsiJadwal: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +41,8 @@ class TambahJadwalhal : AppCompatActivity() {
         btnPilihRingtone = findViewById(R.id.btnPilihRingtone)
         btnSetAlarm = findViewById(R.id.btnSetAlarm)
         btnOpenCalendar = findViewById(R.id.btnOpenCalendar)
+        etJudulJadwal = findViewById(R.id.etJudulJadwal)
+        etDeskripsiJadwal = findViewById(R.id.etDeskripsiJadwal)
 
         numberPickerHour.minValue = 0
         numberPickerHour.maxValue = 23
@@ -94,6 +96,8 @@ class TambahJadwalhal : AppCompatActivity() {
             val hour = numberPickerHour.value
             val minute = numberPickerMinute.value
             val selectedDate = btnOpenCalendar.text.toString()
+            val judul = etJudulJadwal.text.toString().trim()
+            val deskripsi = etDeskripsiJadwal.text.toString().trim()
 
             if (selectedDate == "Pilih Tanggal") {
                 Toast.makeText(this, "Silakan pilih tanggal!", Toast.LENGTH_SHORT).show()
@@ -105,8 +109,13 @@ class TambahJadwalhal : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (judul.isEmpty()) {
+                Toast.makeText(this, "Masukkan judul jadwal!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             setAlarm(hour, minute, selectedDate, selectedRingtoneUri!!)
-            saveAlarm(hour, minute, selectedRingtoneUri!!.toString(), selectedDate)
+            saveAlarm(hour, minute, selectedRingtoneUri!!.toString(), selectedDate, judul, deskripsi)
 
             Toast.makeText(this, "Alarm disetel untuk $selectedDate $hour:$minute", Toast.LENGTH_SHORT).show()
 
@@ -114,7 +123,6 @@ class TambahJadwalhal : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-
 
 
         btnOpenCalendar.setOnClickListener {
@@ -164,13 +172,20 @@ class TambahJadwalhal : AppCompatActivity() {
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
 
-
-    private fun saveAlarm(hour: Int, minute: Int, ringtoneUri: String, tanggal: String) {
+    private fun saveAlarm(hour: Int, minute: Int, ringtoneUri: String, tanggal: String, judul: String, deskripsi: String) {
         lifecycleScope.launch {
-            db.alarmDao().insertAlarm(AlarmData(hour = hour, minute = minute, ringtoneUri = ringtoneUri, tanggal = tanggal))
+            db.alarmDao().insertAlarm(
+                AlarmData(
+                    hour = hour,
+                    minute = minute,
+                    ringtoneUri = ringtoneUri,
+                    tanggal = tanggal,
+                    judul = judul,
+                    deskripsi = deskripsi
+                )
+            )
         }
     }
-
 
     private fun loadSavedAlarm() {
         lifecycleScope.launch {
@@ -181,6 +196,8 @@ class TambahJadwalhal : AppCompatActivity() {
                     numberPickerMinute.value = lastAlarm.minute
                     selectedRingtoneUri = Uri.parse(lastAlarm.ringtoneUri)
                     btnPilihRingtone.text = "Nada Dering Dipilih"
+                    etJudulJadwal.setText(lastAlarm.judul)
+                    etDeskripsiJadwal.setText(lastAlarm.deskripsi)
                 }
             }
         }

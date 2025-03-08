@@ -9,5 +9,7 @@ data class AlarmData(
     val hour: Int,
     val minute: Int,
     val ringtoneUri: String,
-    val tanggal: String // Tambahkan kolom tanggal
+    val tanggal: String, // Tambahkan kolom tanggal
+    val judul: String, // Tambahkan kolom judul
+    val deskripsi: String // Tambahkan kolom deskripsi
 )
