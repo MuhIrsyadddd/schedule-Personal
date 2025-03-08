@@ -15,4 +15,8 @@ interface AlarmDao {
 
     @Query("SELECT * FROM alarm_data ORDER BY id DESC")
     suspend fun getAllAlarms(): List<AlarmData>
+
+    @Query("DELETE FROM alarm_data WHERE id = :alarmId")
+    suspend fun deleteAlarmById(alarmId: Int)
+
 }

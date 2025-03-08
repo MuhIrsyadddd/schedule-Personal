@@ -40,9 +40,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAlarms() {
         lifecycleScope.launch {
-            val alarmList = database.alarmDao().getAllAlarms()
-            alarmAdapter = AlarmAdapter(alarmList)
+            val alarmList = database.alarmDao().getAllAlarms().toMutableList()
+            alarmAdapter = AlarmAdapter(alarmList) { alarm ->
+                deleteAlarm(alarm)
+            }
             recyclerView.adapter = alarmAdapter
+        }
+    }
+
+    private fun deleteAlarm(alarm: AlarmData) {
+        lifecycleScope.launch {
+            database.alarmDao().deleteAlarmById(alarm.id)
+            alarmAdapter.removeItem(alarm)
         }
     }
 }
