@@ -148,10 +148,10 @@ class TambahJadwalhal : AppCompatActivity() {
         }
 
         val calendar = Calendar.getInstance()
-        val dateParts = tanggal.split("/") // Format: dd/MM/yyyy
+        val dateParts = tanggal.split("/")
         if (dateParts.size == 3) {
             val day = dateParts[0].toInt()
-            val month = dateParts[1].toInt() - 1 // Karena bulan di Calendar mulai dari 0
+            val month = dateParts[1].toInt() - 1
             val year = dateParts[2].toInt()
 
             calendar.set(Calendar.YEAR, year)
@@ -165,12 +165,16 @@ class TambahJadwalhal : AppCompatActivity() {
             return
         }
 
+        val requestCode = (hour * 60 + minute) // Unik berdasarkan jam dan menit
         val pendingIntent = PendingIntent.getBroadcast(
-            this, (hour * 60 + minute), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        if (calendar.timeInMillis > System.currentTimeMillis()) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        }
     }
+
 
     private fun saveAlarm(hour: Int, minute: Int, ringtoneUri: String, tanggal: String, judul: String, deskripsi: String) {
         lifecycleScope.launch {

@@ -3,6 +3,7 @@ package com.example.agendapersonal
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -109,5 +110,40 @@ class MainActivity : AppCompatActivity() {
             database.alarmDao().deleteAlarmById(alarm.id)
             alarmAdapter.removeItem(alarm)
         }
+    }
+
+    private fun checkAndSetAlarms() {
+        lifecycleScope.launch {
+            val alarms = database.alarmDao().getAllAlarms()
+            val currentTime = Calendar.getInstance()
+
+            alarms.forEach { alarm ->
+                val alarmCalendar = Calendar.getInstance().apply {
+                    val dateParts = alarm.tanggal.split("/")
+                    if (dateParts.size == 3) {
+                        set(Calendar.YEAR, dateParts[2].toInt())
+                        set(Calendar.MONTH, dateParts[1].toInt() - 1)
+                        set(Calendar.DAY_OF_MONTH, dateParts[0].toInt())
+                        set(Calendar.HOUR_OF_DAY, alarm.hour)
+                        set(Calendar.MINUTE, alarm.minute)
+                        set(Calendar.SECOND, 0)
+                    }
+                }
+
+                if (alarmCalendar.after(currentTime)) {
+                    setAlarm(alarm.hour, alarm.minute, alarm.tanggal, Uri.parse(alarm.ringtoneUri))
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndSetAlarms()
+    }
+
+    private fun setAlarm(hour: Int, minute: Int, tanggal: String, ringtoneUri: Uri) {
+        // Implementasikan fungsi untuk menyalakan alarm di sini
+        // Misalnya dengan menggunakan AlarmManager atau NotificationManager
     }
 }

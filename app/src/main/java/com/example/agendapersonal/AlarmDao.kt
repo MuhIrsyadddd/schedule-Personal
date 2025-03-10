@@ -19,4 +19,8 @@ interface AlarmDao {
     @Query("DELETE FROM alarm_data WHERE id = :alarmId")
     suspend fun deleteAlarmById(alarmId: Int)
 
+    @Query("SELECT * FROM alarm_data WHERE tanggal = :tanggal ORDER BY hour, minute")
+    suspend fun getAlarmsByDate(tanggal: String): List<AlarmData>
+
+
 }
