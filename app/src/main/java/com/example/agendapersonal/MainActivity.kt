@@ -88,6 +88,14 @@ class MainActivity : AppCompatActivity() {
     private fun loadAlarms() {
         lifecycleScope.launch {
             val alarmList = database.alarmDao().getAllAlarms().toMutableList()
+
+            // Sorting by date (dd/MM/yyyy) and then by time (hour, minute)
+            alarmList.sortWith(compareBy(
+                { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(it.tanggal) },
+                { it.hour },
+                { it.minute }
+            ))
+
             alarmAdapter = AlarmAdapter(alarmList) { alarm ->
                 deleteAlarm(alarm)
             }
@@ -96,6 +104,7 @@ class MainActivity : AppCompatActivity() {
             updateTvDescriptionVisibility(alarmList)
         }
     }
+
 
     private fun deleteAlarm(alarm: AlarmData) {
         lifecycleScope.launch {
