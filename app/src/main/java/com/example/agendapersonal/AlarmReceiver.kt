@@ -72,7 +72,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val channelId = "alarm_channel"
         val notificationId = 101
 
-        // ✅ **Cek izin sebelum mengirimkan notifikasi**
+        // Cek izin sebelum mengirimkan notifikasi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     context, Manifest.permission.POST_NOTIFICATIONS
@@ -83,7 +83,7 @@ class AlarmReceiver : BroadcastReceiver() {
             }
         }
 
-        // ✅ **Buat Notification Channel jika Android 8+**
+        // Buat Notification Channel jika Android 8+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId, "Alarm Notifications",
@@ -93,35 +93,47 @@ class AlarmReceiver : BroadcastReceiver() {
             manager.createNotificationChannel(channel)
         }
 
-        // Intent untuk "Abaikan" (Menghentikan alarm)
-        val dismissIntent = Intent(context, DismissReceiver::class.java).apply {
-            putExtra("ALARM_ID", alarmId)
-        }
-        val dismissPendingIntent = PendingIntent.getBroadcast(
-            context, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        // Ambil judul alarm dari database
+        val db = AppDatabase.getDatabase(context)
+        var judulAlarm = "Alarm Berbunyi!"  // Default jika tidak ditemukan
 
-        // ✅ **Intent untuk "Tidur Sebentar" (Menunda alarm 1 menit)**
-        val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
-            putExtra("ALARM_ID", alarmId)
-            putExtra("RINGTONE_URI", ringtoneUri)  // Pastikan ringtone tetap sama
-        }
-        val snoozePendingIntent = PendingIntent.getBroadcast(
-            context, 1, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        CoroutineScope(Dispatchers.IO).launch {
+            val alarmData = db.alarmDao().getLatestAlarm()
+            if (alarmData != null) {
+                judulAlarm = alarmData.judul  // Gunakan judul dari database
+            }
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.notifagenda)
-            .setContentTitle("Alarm Berbunyi!")
-            .setContentText("Klik Abaikan untuk menghentikan, Tidur Sebentar untuk tunda 1 menit.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .addAction(R.drawable.notifagenda, "Abaikan", dismissPendingIntent)
-            .addAction(R.drawable.notifagenda, "Tidur Sebentar", snoozePendingIntent)
-            .build()
+            // Intent untuk "Abaikan" (Menghentikan alarm)
+            val dismissIntent = Intent(context, DismissReceiver::class.java).apply {
+                putExtra("ALARM_ID", alarmId)
+            }
+            val dismissPendingIntent = PendingIntent.getBroadcast(
+                context, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        with(NotificationManagerCompat.from(context)) {
-            notify(notificationId, notification)
+            // Intent untuk "Tidur Sebentar" (Menunda alarm 1 menit)
+            val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
+                putExtra("ALARM_ID", alarmId)
+                putExtra("RINGTONE_URI", ringtoneUri)
+            }
+            val snoozePendingIntent = PendingIntent.getBroadcast(
+                context, 1, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.notifagenda)
+                .setContentTitle(judulAlarm)  // Tampilkan judul alarm di sini
+                .setContentText("Klik Abaikan untuk menghentikan, Tidur Sebentar untuk tunda 1 menit.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .addAction(R.drawable.notifagenda, "Abaikan", dismissPendingIntent)
+                .addAction(R.drawable.notifagenda, "Tidur Sebentar", snoozePendingIntent)
+                .build()
+
+            with(NotificationManagerCompat.from(context)) {
+                notify(notificationId, notification)
+            }
         }
     }
+
 }
