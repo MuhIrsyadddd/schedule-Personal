@@ -6,9 +6,6 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class AlarmAdapter(
     private var alarmList: MutableList<AlarmData>,
@@ -36,7 +33,6 @@ class AlarmAdapter(
         holder.tvTime.text = "${alarm.hour}:${String.format("%02d", alarm.minute)}"
         holder.tvDeskripsi.text = alarm.deskripsi
 
-        // Klik tombol hapus
         holder.btnDelete.setOnClickListener {
             onDeleteClick(alarm)
         }
@@ -51,4 +47,6 @@ class AlarmAdapter(
             notifyItemRemoved(position)
         }
     }
+
+    fun getAlarmList(): List<AlarmData> = alarmList
 }

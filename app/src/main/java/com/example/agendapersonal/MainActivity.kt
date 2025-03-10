@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Minta izin notifikasi jika belum diberikan (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     this, Manifest.permission.POST_NOTIFICATIONS
@@ -42,44 +41,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Inisialisasi RecyclerView
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Inisialisasi database
         database = AppDatabase.getDatabase(this)
 
-        // Ambil data dari database dan tampilkan
         loadAlarms()
 
-        // Floating Action Button untuk menambah alarm baru
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
         fabAdd.setOnClickListener {
             val intent = Intent(this, TambahJadwalhal::class.java)
             startActivity(intent)
         }
 
-        // Inisialisasi TextView
         tvGreeting = findViewById(R.id.tvGreeting)
         tvDate = findViewById(R.id.tvDate)
-
-        // Mulai update waktu secara real-time
         startClock()
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (!isGranted) {
-            // Handle jika pengguna menolak izin
-        }
+        if (!isGranted) { }
     }
 
     private fun startClock() {
         val runnable = object : Runnable {
             override fun run() {
                 updateDateTime()
-                handler.postDelayed(this, 1000) // Perbarui setiap 1 detik
+                handler.postDelayed(this, 1000)
             }
         }
         handler.post(runnable)
@@ -87,8 +77,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDateTime() {
         val locale = Locale("id", "ID")
-        val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", locale) // Senin, 17 Juli 2000
-        val timeFormat = SimpleDateFormat("HH:mm:ss", locale) // 10:10:10
+        val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", locale)
+        val timeFormat = SimpleDateFormat("HH:mm:ss", locale)
 
         val currentDate = Date()
         tvGreeting.text = dateFormat.format(currentDate)
@@ -102,6 +92,8 @@ class MainActivity : AppCompatActivity() {
                 deleteAlarm(alarm)
             }
             recyclerView.adapter = alarmAdapter
+
+            updateTvDescriptionVisibility(alarmList)
         }
     }
 
@@ -109,6 +101,16 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             database.alarmDao().deleteAlarmById(alarm.id)
             alarmAdapter.removeItem(alarm)
+            updateTvDescriptionVisibility(alarmAdapter.getAlarmList())
+        }
+    }
+
+    private fun updateTvDescriptionVisibility(alarmList: List<AlarmData>) {
+        val tvDescription = findViewById<TextView>(R.id.tvDescription)
+        if (alarmList.isEmpty()) {
+            tvDescription.visibility = TextView.VISIBLE
+        } else {
+            tvDescription.visibility = TextView.GONE
         }
     }
 
@@ -144,6 +146,5 @@ class MainActivity : AppCompatActivity() {
 
     private fun setAlarm(hour: Int, minute: Int, tanggal: String, ringtoneUri: Uri) {
         // Implementasikan fungsi untuk menyalakan alarm di sini
-        // Misalnya dengan menggunakan AlarmManager atau NotificationManager
     }
 }
