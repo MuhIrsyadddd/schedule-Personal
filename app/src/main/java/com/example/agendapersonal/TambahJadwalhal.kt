@@ -19,7 +19,8 @@ import java.util.Calendar
 
 class TambahJadwalhal : AppCompatActivity() {
 
-    private lateinit var btnPilihRingtone: Button
+    private lateinit var btnPilihRingtone: LinearLayout
+    private lateinit var tvRingtoneName: TextView
     private lateinit var btnSetAlarm: Button
     private lateinit var btnOpenCalendar: Button
     private var selectedRingtoneUri: Uri? = null
@@ -39,6 +40,7 @@ class TambahJadwalhal : AppCompatActivity() {
         numberPickerHour = findViewById(R.id.numberPickerHour)
         numberPickerMinute = findViewById(R.id.numberPickerMinute)
         btnPilihRingtone = findViewById(R.id.btnPilihRingtone)
+        tvRingtoneName = findViewById(R.id.tvRingtoneName)
         btnSetAlarm = findViewById(R.id.btnSetAlarm)
         btnOpenCalendar = findViewById(R.id.btnOpenCalendar)
         etJudulJadwal = findViewById(R.id.etJudulJadwal)
@@ -77,7 +79,8 @@ class TambahJadwalhal : AppCompatActivity() {
                 val ringtones = RingtonePickerActivity.getPickerResult(result.data!!)
                 if (ringtones.isNotEmpty()) {
                     selectedRingtoneUri = ringtones[0].uri
-                    btnPilihRingtone.text = "Nada Dering Dipilih"
+                    tvRingtoneName.text = ringtones[0].name
+
                 }
             }
         }
@@ -124,7 +127,6 @@ class TambahJadwalhal : AppCompatActivity() {
             finish()
         }
 
-
         btnOpenCalendar.setOnClickListener {
             val calendar = Calendar.getInstance()
             val year = calendar.get(Calendar.YEAR)
@@ -165,7 +167,7 @@ class TambahJadwalhal : AppCompatActivity() {
             return
         }
 
-        val requestCode = (hour * 60 + minute) // Unik berdasarkan jam dan menit
+        val requestCode = (hour * 60 + minute)
         val pendingIntent = PendingIntent.getBroadcast(
             this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -174,7 +176,6 @@ class TambahJadwalhal : AppCompatActivity() {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
-
 
     private fun saveAlarm(hour: Int, minute: Int, ringtoneUri: String, tanggal: String, judul: String, deskripsi: String) {
         lifecycleScope.launch {
@@ -199,7 +200,7 @@ class TambahJadwalhal : AppCompatActivity() {
                     numberPickerHour.value = lastAlarm.hour
                     numberPickerMinute.value = lastAlarm.minute
                     selectedRingtoneUri = Uri.parse(lastAlarm.ringtoneUri)
-                    btnPilihRingtone.text = "Nada Dering Dipilih"
+                    tvRingtoneName.text = lastAlarm.judul
                     etJudulJadwal.setText(lastAlarm.judul)
                     etDeskripsiJadwal.setText(lastAlarm.deskripsi)
                 }

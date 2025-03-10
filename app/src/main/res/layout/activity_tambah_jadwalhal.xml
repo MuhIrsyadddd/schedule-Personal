@@ -54,30 +54,70 @@
       android:id="@+id/numberPickerHour"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
+      android:textColor="#FFFFFF"
       app:layout_constraintTop_toBottomOf="@id/btnOpenCalendar"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"/>
+      android:layout_marginStart="100dp"/>
+
+  <!-- Pemisah Titik (:) -->
+  <TextView
+      android:id="@+id/tvSeparator"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text=" : "
+      android:textSize="32sp"
+      android:textColor="@color/black"
+      app:layout_constraintTop_toTopOf="@id/numberPickerHour"
+      app:layout_constraintBottom_toBottomOf="@id/numberPickerHour"
+      app:layout_constraintStart_toEndOf="@id/numberPickerHour"
+      android:layout_marginStart="4dp"/>
 
   <!-- NumberPicker untuk Menit -->
   <NumberPicker
       android:id="@+id/numberPickerMinute"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      app:layout_constraintTop_toBottomOf="@id/numberPickerHour"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      android:layout_marginTop="20dp" />
+      android:textColor="#FFFFFF"
+      app:layout_constraintTop_toTopOf="@id/numberPickerHour"
+      app:layout_constraintBottom_toBottomOf="@id/numberPickerHour"
+      app:layout_constraintStart_toEndOf="@id/tvSeparator"
+      android:layout_marginStart="4dp"/>
+
 
   <!-- Tombol Pilih Nada Dering -->
-  <Button
+  <LinearLayout
       android:id="@+id/btnPilihRingtone"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="Pilih Nada Dering"
+      android:orientation="horizontal"
+      android:background="?android:attr/selectableItemBackground"
+      android:padding="8dp"
+      android:clickable="true"
+      android:focusable="true"
       app:layout_constraintTop_toBottomOf="@id/numberPickerMinute"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      android:layout_marginTop="20dp"/>
+      android:layout_marginTop="20dp">
+
+    <!-- Ikon Lonceng -->
+    <ImageView
+        android:id="@+id/iconBell"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_baseline_notifications_24"
+        app:tint="@color/black" />
+
+    <!-- Teks Ringtone -->
+    <TextView
+        android:id="@+id/tvRingtoneName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Default (Cesium)"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:layout_marginStart="8dp"/>
+
+  </LinearLayout>
 
   <!-- Tombol Setel Alarm -->
   <Button
