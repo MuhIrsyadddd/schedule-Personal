@@ -1,0 +1,35 @@
+package com.example.jadwalharian // Ganti dengan nama paket Anda
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.*
+
+class TaskAdapter(private val tasks: List<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+
+    // ViewHolder untuk menampung view dari setiap item di list
+    class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val titleTextView: TextView = itemView.findViewById(R.id.textViewTaskTitle)
+        val timeTextView: TextView = itemView.findViewById(R.id.textViewTaskTime)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.list_item_task, parent, false)
+        return TaskViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
+        val task = tasks[position]
+        holder.titleTextView.text = task.title
+
+        // Format timestamp menjadi string tanggal dan waktu yang mudah dibaca
+        val sdf = SimpleDateFormat("EEE, dd MMM yyyy - HH:mm", Locale.getDefault())
+        holder.timeTextView.text = sdf.format(Date(task.timestamp))
+    }
+
+    override fun getItemCount() = tasks.size
+}
