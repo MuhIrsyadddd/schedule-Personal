@@ -25,15 +25,18 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jadwalharian.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val taskList = ArrayList<Task>()
     private lateinit var taskAdapter: TaskAdapter
+    private lateinit var db: AppDatabase
 
     private var selectedSoundUri: Uri? = null
 
@@ -51,27 +54,104 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Izin diberikan.", Toast.LENGTH_SHORT).show()
                 askForStoragePermissionAndPickAudio()
             } else {
-                Toast.makeText(this, "Izin ditolak. Fungsi mungkin terbatas.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Izin ditolak.", Toast.LENGTH_LONG).show()
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         applyTheme()
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Inisialisasi Database
+        db = AppDatabase.getDatabase(this)
+
         setupRecyclerView()
-        askForNotificationPermission()
+        observeTasks()
         setupThemeToggleButton()
+        askForNotificationPermission()
 
         binding.fabAddTask.setOnClickListener {
             showAddTaskDialog()
         }
-        checkEmptyView()
     }
+
+    private fun setupRecyclerView() {
+        taskAdapter = TaskAdapter(emptyList()) { task ->
+            deleteTask(task)
+        }
+        binding.recyclerViewTasks.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = taskAdapter
+        }
+    }
+
+    private fun observeTasks() {
+        db.taskDao().getAllTasks().observe(this) { tasks ->
+            tasks?.let {
+                taskAdapter.updateTasks(it)
+                checkEmptyView(it)
+            }
+        }
+    }
+
+    private fun deleteTask(task: Task) {
+        lifecycleScope.launch {
+            db.taskDao().deleteTask(task)
+            // Batalkan juga alarm yang terkait
+            cancelAlarm(task)
+            Toast.makeText(this@MainActivity, "Jadwal '${task.title}' dihapus.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkEmptyView(tasks: List<Task>) {
+        binding.textViewEmpty.visibility = if (tasks.isEmpty()) View.VISIBLE else View.GONE
+        binding.recyclerViewTasks.visibility = if (tasks.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun addTask(task: Task) {
+        lifecycleScope.launch {
+            db.taskDao().insertTask(task)
+            scheduleAlarm(task)
+        }
+    }
+
+    private fun scheduleAlarm(task: Task) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("TASK_TITLE", task.title)
+            putExtra("TASK_ID", task.id)
+            putExtra("TASK_SOUND_URI", task.soundUri)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, task.id.toInt(), intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            return
+        }
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.timestamp, pendingIntent)
+        Toast.makeText(this, "Alarm untuk '${task.title}' telah disetel.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun cancelAlarm(task: Task) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, task.id.toInt(), intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+        }
+    }
+
+    // ... (Fungsi lain seperti applyTheme, pickDateTime, dll tetap sama)
 
     private fun applyTheme() {
         val sharedPrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
@@ -104,37 +184,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupRecyclerView() {
-        taskAdapter = TaskAdapter(taskList)
-        binding.recyclerViewTasks.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = taskAdapter
-        }
-    }
-
-    private fun checkEmptyView() {
-        binding.textViewEmpty.visibility = if (taskList.isEmpty()) View.VISIBLE else View.GONE
-        binding.recyclerViewTasks.visibility = if (taskList.isEmpty()) View.GONE else View.VISIBLE
-    }
-
     private fun showAddTaskDialog() {
         selectedSoundUri = null
-
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_task, null)
         val editTextTaskTitle = dialogView.findViewById<EditText>(R.id.editTextTaskTitle)
         val buttonSelectSound = dialogView.findViewById<Button>(R.id.buttonSelectSound)
-
         val dialog = AlertDialog.Builder(this)
             .setTitle("Tambah Jadwal Baru")
             .setView(dialogView)
             .setPositiveButton("Simpan", null)
             .setNegativeButton("Batal", null)
             .create()
-
         buttonSelectSound.setOnClickListener {
             askForStoragePermissionAndPickAudio()
         }
-
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
@@ -168,7 +231,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val newTask = Task(
-                    id = System.currentTimeMillis(),
                     title = taskTitle,
                     timestamp = calendar.timeInMillis,
                     soundUri = soundUri?.toString()
@@ -176,37 +238,6 @@ class MainActivity : AppCompatActivity() {
                 addTask(newTask)
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
-    }
-
-    private fun addTask(task: Task) {
-        taskList.add(task)
-        taskList.sortBy { it.timestamp }
-        taskAdapter.notifyDataSetChanged()
-        checkEmptyView()
-        scheduleAlarm(task)
-    }
-
-    private fun scheduleAlarm(task: Task) {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, AlarmReceiver::class.java).apply {
-            putExtra("TASK_TITLE", task.title)
-            putExtra("TASK_ID", task.id)
-            putExtra("TASK_SOUND_URI", task.soundUri)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, task.id.toInt(), intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-            Toast.makeText(this, "Izin untuk alarm presisi dibutuhkan.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.timestamp, pendingIntent)
-        Toast.makeText(this, "Alarm untuk '${task.title}' telah disetel.", Toast.LENGTH_SHORT).show()
     }
 
     private fun askForNotificationPermission() {
