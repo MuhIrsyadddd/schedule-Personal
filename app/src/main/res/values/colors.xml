@@ -14,4 +14,15 @@
     <color name="text_primary">#1F2937</color>
     <color name="text_secondary">#4B5563</color>
     <color name="icon_tint">#4B5563</color>
+
+    <color name="task_color_done_bg">#F6FEF9</color>
+    <color name="task_color_progress_bg">#F6FAFE</color>
+    <color name="task_color_upcoming_bg">#F8F9FA</color>
+    <color name="task_color_progress_icon">#4A3780</color> <color name="status_color_done">#D1E7DD</color>
+    <color name="status_color_inprogress">#CFE2FF</color>
+    <color name="status_color_upcoming">#E9ECEF</color>
+
+    <color name="status_text_color_done">#0A3622</color>
+    <color name="status_text_color_inprogress">#052C65</color>
+    <color name="status_text_color_upcoming">#495057</color>
 </resources>

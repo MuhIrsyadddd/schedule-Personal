@@ -8,7 +8,6 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -18,26 +17,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.jadwalharian.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var taskAdapter: TaskAdapter
+    private lateinit var dateAdapter: DateAdapter
     private lateinit var db: AppDatabase
-
     private var selectedSoundUri: Uri? = null
 
     private val selectAudioLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -52,7 +49,6 @@ class MainActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 Toast.makeText(this, "Izin diberikan.", Toast.LENGTH_SHORT).show()
-                askForStoragePermissionAndPickAudio()
             } else {
                 Toast.makeText(this, "Izin ditolak.", Toast.LENGTH_LONG).show()
             }
@@ -60,34 +56,68 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyTheme()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inisialisasi Database
         db = AppDatabase.getDatabase(this)
 
-        setupRecyclerView()
+        setupUI()
+        setupRecyclerViews()
         observeTasks()
-        setupThemeToggleButton()
         askForNotificationPermission()
+    }
 
-        binding.fabAddTask.setOnClickListener {
+    private fun setupUI() {
+        updateDateDisplay()
+        // Error fabAddTask diperbaiki: Menggunakan ID tombol header yang baru
+        binding.buttonAddTaskHeader.setOnClickListener {
             showAddTaskDialog()
         }
     }
 
-    private fun setupRecyclerView() {
-        taskAdapter = TaskAdapter(emptyList()) { task ->
-            deleteTask(task)
-        }
+    private fun setupRecyclerViews() {
+        // Setup Task RecyclerView
+        // Menghapus onDeleteClick karena tombol hapus tidak ada di UI baru
+        taskAdapter = TaskAdapter(emptyList())
         binding.recyclerViewTasks.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = taskAdapter
         }
+
+        // Setup Date RecyclerView
+        val dateList = generateDateList()
+        dateAdapter = DateAdapter(dateList)
+        binding.recyclerViewDates.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
+            adapter = dateAdapter
+            // Scroll ke tanggal hari ini
+            val todayIndex = dateList.indexOfFirst { it.isSelected }
+            if (todayIndex != -1) {
+                (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayIndex - 2, 0) // Center today's date
+            }
+        }
+    }
+
+    private fun generateDateList(): List<DateItem> {
+        val dates = mutableListOf<DateItem>()
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -15) // Mulai dari 15 hari yang lalu
+        for (i in 0..29) { // Buat list untuk 30 hari
+            val isToday = i == 15
+            dates.add(DateItem(calendar.time, isToday)) // Tandai hari ini sebagai terpilih
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return dates
+    }
+
+    private fun updateDateDisplay() {
+        val calendar = Calendar.getInstance()
+        val monthYearFormat = SimpleDateFormat("MMMM, yyyy", Locale.getDefault())
+        binding.textViewMonthYear.text = monthYearFormat.format(calendar.time)
     }
 
     private fun observeTasks() {
+        // TODO: Nanti, filter tugas berdasarkan tanggal yang dipilih dari dateAdapter
         db.taskDao().getAllTasks().observe(this) { tasks ->
             tasks?.let {
                 taskAdapter.updateTasks(it)
@@ -99,7 +129,6 @@ class MainActivity : AppCompatActivity() {
     private fun deleteTask(task: Task) {
         lifecycleScope.launch {
             db.taskDao().deleteTask(task)
-            // Batalkan juga alarm yang terkait
             cancelAlarm(task)
             Toast.makeText(this@MainActivity, "Jadwal '${task.title}' dihapus.", Toast.LENGTH_SHORT).show()
         }
@@ -146,43 +175,12 @@ class MainActivity : AppCompatActivity() {
             this, task.id.toInt(), intent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
+        pendingIntent?.let {
+            alarmManager.cancel(it)
         }
     }
 
-    // ... (Fungsi lain seperti applyTheme, pickDateTime, dll tetap sama)
-
-    private fun applyTheme() {
-        val sharedPrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
-        val isDarkMode = sharedPrefs.getBoolean("is_dark_mode", isSystemInDarkMode())
-        if (isDarkMode) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
-    }
-
-    private fun isSystemInDarkMode(): Boolean {
-        return resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-    }
-
-    private fun setupThemeToggleButton() {
-        binding.buttonThemeToggle.setOnClickListener {
-            val sharedPrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
-            val editor = sharedPrefs.edit()
-
-            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            if (currentNightMode == Configuration.UI_MODE_NIGHT_NO) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                editor.putBoolean("is_dark_mode", true)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                editor.putBoolean("is_dark_mode", false)
-            }
-            editor.apply()
-        }
-    }
+    // Fungsi applyTheme dan setupThemeToggleButton dihapus karena tombolnya sudah tidak ada.
 
     private fun showAddTaskDialog() {
         selectedSoundUri = null
@@ -199,8 +197,7 @@ class MainActivity : AppCompatActivity() {
             askForStoragePermissionAndPickAudio()
         }
         dialog.setOnShowListener {
-            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positiveButton.setOnClickListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val taskTitle = editTextTaskTitle.text.toString()
                 if (taskTitle.isBlank()) {
                     Toast.makeText(this, "Judul tidak boleh kosong", Toast.LENGTH_SHORT).show()
@@ -230,10 +227,13 @@ class MainActivity : AppCompatActivity() {
                     return@TimePickerDialog
                 }
 
+                // Error status & duration diperbaiki: Memberikan nilai default
                 val newTask = Task(
                     title = taskTitle,
                     timestamp = calendar.timeInMillis,
-                    soundUri = soundUri?.toString()
+                    soundUri = soundUri?.toString(),
+                    status = "Upcoming",
+                    duration = "1.5 Hours" // Anda bisa menambahkan input untuk durasi di dialog
                 )
                 addTask(newTask)
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 if (cursor != null && cursor.moveToFirst()) {
                     val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if(columnIndex >= 0) {
+                    if (columnIndex >= 0) {
                         result = cursor.getString(columnIndex)
                     }
                 }
@@ -290,13 +290,15 @@ class MainActivity : AppCompatActivity() {
         }
         if (result == null) {
             result = uri.path
-            val cut = result?.lastIndexOf('/')
-            if (cut != null && cut != -1) {
-                if (result != null) {
-                    result = result.substring(cut + 1)
+            // PERBAIKAN: Menambahkan null-check sebelum memanggil substring
+            result?.let { path ->
+                val cut = path.lastIndexOf('/')
+                if (cut != -1) {
+                    result = path.substring(cut + 1)
                 }
             }
         }
         return result ?: "Unknown"
     }
 }
+

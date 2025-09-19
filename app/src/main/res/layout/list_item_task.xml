@@ -1,56 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="8dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <View
+        android:id="@+id/timeline_line"
+        android:layout_width="2dp"
+        android:layout_height="0dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/timeline_marker"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="@id/timeline_line"
+        app:layout_constraintStart_toStartOf="@id/timeline_line"
+        app:layout_constraintTop_toTopOf="@+id/card_task"
+        tools:src="@drawable/ic_timeline_circle"
+        tools:tint="@color/task_color_progress_icon" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_task"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/timeline_line"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/textViewTaskTitle"
-            android:layout_width="0dp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/button_delete_task"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Judul Tugas yang Sangat Panjang Sekali" />
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/textViewTaskTime"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="@+id/textViewTaskTitle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewTaskTitle"
-            tools:text="Jum, 28 Jun 2024 - 10:30" />
+            <TextView
+                android:id="@+id/textViewTaskTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Design Meeting" />
 
-        <ImageButton
-            android:id="@+id/button_delete_task"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Hapus Tugas"
-            android:src="@android:drawable/ic_menu_delete"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="?attr/icon_tint" />
+            <TextView
+                android:id="@+id/textViewTaskTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textViewTaskTitle"
+                tools:text="10:00 - 10:30" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/textViewTaskDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp"
+                app:drawableStartCompat="@android:drawable/ic_menu_recent_history"
+                app:drawableTint="?android:attr/textColorSecondary"
+                app:layout_constraintBottom_toBottomOf="@+id/textViewTaskTime"
+                app:layout_constraintStart_toEndOf="@+id/textViewTaskTime"
+                app:layout_constraintTop_toTopOf="@+id/textViewTaskTime"
+                tools:text="30 Minutes" />
 
-</com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/textViewTaskStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:paddingStart="12dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="4dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textViewTaskTime"
+                tools:background="@drawable/status_background_inprogress"
+                tools:text="In Progress"
+                tools:textColor="#052C65" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
