@@ -1,6 +1,5 @@
 package com.example.jadwalharian
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,18 +8,18 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+// PERBARUI KONSTRUKTOR: Tambahkan listener onStatusUpdate
 class TaskAdapter(
     private var tasks: List<Task>,
-    // Tombol hapus sudah tidak ada di desain baru, jadi kita hapus onDeleteClick
-    // private val onDeleteClick: (Task) -> Unit
+    private val onStatusUpdate: (task: Task, newStatus: String) -> Unit
 ) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Hubungkan semua view dari layout item yang baru
         val card: CardView = itemView.findViewById(R.id.card_task)
         val titleTextView: TextView = itemView.findViewById(R.id.textViewTaskTitle)
         val timeTextView: TextView = itemView.findViewById(R.id.textViewTaskTime)
@@ -39,52 +38,65 @@ class TaskAdapter(
         val task = tasks[position]
         val context = holder.itemView.context
 
-        // Set data ke view
         holder.titleTextView.text = task.title
         holder.durationTextView.text = task.duration
         holder.statusTextView.text = task.status
 
-        // Format waktu (09:00 - 09:30)
         val startTime = Date(task.timestamp)
         val durationMillis = parseDurationToMillis(task.duration)
         val endTime = Date(task.timestamp + durationMillis)
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         holder.timeTextView.text = "${timeFormat.format(startTime)} - ${timeFormat.format(endTime)}"
 
-        // Logika untuk mengubah warna dan ikon berdasarkan status
+        // TAMBAHKAN ONCLICK LISTENER UNTUK STATUS
+        holder.statusTextView.setOnClickListener {
+            val statuses = arrayOf("Upcoming", "In Progress", "Done")
+            MaterialAlertDialogBuilder(context)
+                .setTitle("Update Status Tugas")
+                .setItems(statuses) { dialog, which ->
+                    val newStatus = statuses[which]
+                    // Panggil lambda untuk memberitahu MainActivity agar update database
+                    onStatusUpdate(task, newStatus)
+                }
+                .show()
+        }
+
         when (task.status) {
             "Done" -> {
                 holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.task_color_done_bg))
                 holder.statusTextView.background = ContextCompat.getDrawable(context, R.drawable.status_background_done)
-                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_check) // Ikon centang
+                holder.statusTextView.setTextColor(ContextCompat.getColor(context, R.color.status_text_color_done))
+                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_check)
             }
             "In Progress" -> {
                 holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.task_color_progress_bg))
                 holder.statusTextView.background = ContextCompat.getDrawable(context, R.drawable.status_background_inprogress)
-                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_circle) // Ikon lingkaran biru
+                holder.statusTextView.setTextColor(ContextCompat.getColor(context, R.color.status_text_color_inprogress))
+                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_circle)
                 holder.timelineMarker.setColorFilter(ContextCompat.getColor(context, R.color.task_color_progress_icon))
             }
             "Upcoming" -> {
                 holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.task_color_upcoming_bg))
                 holder.statusTextView.background = ContextCompat.getDrawable(context, R.drawable.status_background_upcoming)
-                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_circle) // Ikon lingkaran abu-abu
+                holder.statusTextView.setTextColor(ContextCompat.getColor(context, R.color.status_text_color_upcoming))
+                holder.timelineMarker.setImageResource(R.drawable.ic_timeline_circle)
                 holder.timelineMarker.clearColorFilter()
             }
-            else -> {
+            else -> { // Fallback case
                 holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.task_color_upcoming_bg))
                 holder.statusTextView.background = ContextCompat.getDrawable(context, R.drawable.status_background_upcoming)
+                holder.statusTextView.setTextColor(ContextCompat.getColor(context, R.color.status_text_color_upcoming))
                 holder.timelineMarker.setImageResource(R.drawable.ic_timeline_circle)
                 holder.timelineMarker.clearColorFilter()
             }
         }
     }
 
-    // Fungsi helper untuk mengkonversi durasi string ke milidetik
     private fun parseDurationToMillis(duration: String): Long {
         return try {
             val parts = duration.split(" ")
             val value = parts[0].toFloat()
-            when (parts[1].lowercase()) {
+            when (parts[1].lowercase(Locale.ROOT)) {
                 "minutes" -> TimeUnit.MINUTES.toMillis(value.toLong())
                 "hour", "hours" -> (value * TimeUnit.HOURS.toMillis(1)).toLong()
                 else -> 0L

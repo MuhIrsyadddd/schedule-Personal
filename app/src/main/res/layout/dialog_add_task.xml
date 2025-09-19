@@ -1,34 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/editTextTaskTitle"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Masukkan judul jadwal..."
-        android:inputType="textCapWords" />
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/buttonSelectSound"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Pilih Lagu"
-        app:icon="@android:drawable/ic_btn_speak_now" />
+        <TextView
+            android:id="@+id/textViewSelectDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/time_picker_background"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:text="Pilih Tanggal"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textStyle="bold"
+            app:drawableEndCompat="@drawable/ic_calendar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textViewSoundSelected"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Suara: Default"
-        android:textAppearance="?attr/textAppearanceBody2"
-        android:textColor="?android:attr/textColorSecondary" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textFieldTaskTitle"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewSelectDate">
 
-</LinearLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextTaskTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Task Name"
+                android:inputType="textCapSentences" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/textViewStartTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/time_picker_background"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:text="Pilih Waktu Mulai"
+            android:textColor="?android:attr/textColorSecondary"
+            app:drawableEndCompat="@android:drawable/ic_menu_recent_history"
+            app:layout_constraintEnd_toStartOf="@+id/textViewEndTime"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textFieldTaskTitle" />
+
+        <TextView
+            android:id="@+id/textViewEndTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/time_picker_background"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:text="Pilih Waktu Selesai"
+            android:textColor="?android:attr/textColorSecondary"
+            app:drawableEndCompat="@android:drawable/ic_menu_recent_history"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/textViewStartTime"
+            app:layout_constraintTop_toBottomOf="@id/textFieldTaskTitle" />
+
+        <Button
+            android:id="@+id/buttonSelectSound"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Pilih Nada Alarm"
+            app:icon="@android:drawable/ic_lock_silent_mode_off"
+            app:iconTint="?attr/colorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewStartTime" />
+
+        <TextView
+            android:id="@+id/textViewSoundSelected"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Nada: Default"
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttonSelectSound" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

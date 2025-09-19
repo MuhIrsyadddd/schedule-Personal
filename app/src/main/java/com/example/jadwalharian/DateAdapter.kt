@@ -8,15 +8,17 @@ import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Data class yang hilang, sekarang ada di sini
 data class DateItem(
     val date: Date,
     var isSelected: Boolean = false
 )
 
-class DateAdapter(private val dates: List<DateItem>) : RecyclerView.Adapter<DateAdapter.DateViewHolder>() {
+// PERBARUI KONSTRUKTOR: Tambahkan onDateClick
+class DateAdapter(
+    private val dates: List<DateItem>,
+    private val onDateClick: (Date) -> Unit
+) : RecyclerView.Adapter<DateAdapter.DateViewHolder>() {
 
-    // Lacak posisi item yang sedang dipilih
     private var selectedPosition = dates.indexOfFirst { it.isSelected }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DateViewHolder {
@@ -28,22 +30,19 @@ class DateAdapter(private val dates: List<DateItem>) : RecyclerView.Adapter<Date
         val dateItem = dates[position]
         holder.bind(dateItem)
 
-        // Atur listener klik untuk setiap item tanggal
         holder.itemView.setOnClickListener {
             if (selectedPosition != holder.adapterPosition) {
-                // Hapus status terpilih dari item lama
                 if (selectedPosition != -1) {
                     dates[selectedPosition].isSelected = false
                     notifyItemChanged(selectedPosition)
                 }
 
-                // Set status terpilih untuk item baru yang diklik
                 selectedPosition = holder.adapterPosition
                 dates[selectedPosition].isSelected = true
                 notifyItemChanged(selectedPosition)
 
-                // TODO: Di sini Anda bisa menambahkan logika untuk memfilter daftar tugas
-                // berdasarkan tanggal yang dipilih.
+                // PERBARUI LOGIKA: Panggil listener dengan tanggal yang dipilih
+                onDateClick(dateItem.date)
             }
         }
     }
@@ -58,12 +57,10 @@ class DateAdapter(private val dates: List<DateItem>) : RecyclerView.Adapter<Date
             val dayNameFormat = SimpleDateFormat("EEE", Locale.getDefault())
             val dayNumberFormat = SimpleDateFormat("d", Locale.getDefault())
 
-            dayName.text = dayNameFormat.format(dateItem.date).uppercase()
+            dayName.text = dayNameFormat.format(dateItem.date).uppercase(Locale.getDefault())
             dayNumber.text = dayNumberFormat.format(dateItem.date)
 
-            // Mengubah tampilan item (latar belakang & warna teks) berdasarkan status isSelected
             itemView.isSelected = dateItem.isSelected
         }
     }
 }
-

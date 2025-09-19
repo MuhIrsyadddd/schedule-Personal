@@ -3,6 +3,7 @@ package com.example.jadwalharian
 import android.Manifest
 import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.content.DialogInterface
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
@@ -19,7 +20,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -36,11 +37,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dateAdapter: DateAdapter
     private lateinit var db: AppDatabase
     private var selectedSoundUri: Uri? = null
+    private var soundSelectionTextView: android.widget.TextView? = null // <-- TAMBAHKAN BARIS INI
 
     private val selectAudioLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let {
             contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             selectedSoundUri = it
+
+            // PERBARUI UI SECARA REAL-TIME
+            // Tanda tanya (?) memastikan aplikasi tidak crash jika referensinya null
+            soundSelectionTextView?.text = "Nada: ${getFileName(it)}"
+
             Toast.makeText(this, "Lagu dipilih: ${getFileName(it)}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -62,8 +69,12 @@ class MainActivity : AppCompatActivity() {
         db = AppDatabase.getDatabase(this)
 
         setupUI()
-        setupRecyclerViews()
-        observeTasks()
+        setupRecyclerViews() // Adapter sekarang sudah punya listener
+
+        // GANTI `observeTasks()` dengan ini untuk memuat tugas hari ini saat pertama kali
+        val today = generateDateList().find { it.isSelected }?.date ?: Date()
+        loadTasksForDate(today)
+
         askForNotificationPermission()
     }
 
@@ -76,24 +87,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        // Setup Task RecyclerView
-        // Menghapus onDeleteClick karena tombol hapus tidak ada di UI baru
-        taskAdapter = TaskAdapter(emptyList())
+        // PERBARUI BAGIAN INI: Tambahkan lambda untuk onStatusUpdate
+        taskAdapter = TaskAdapter(emptyList()) { taskToUpdate, newStatus ->
+            // Buat salinan objek tugas dengan status baru
+            val updatedTask = taskToUpdate.copy(status = newStatus)
+            // Panggil fungsi untuk menyimpan perubahan ke database
+            updateTask(updatedTask)
+        }
+
         binding.recyclerViewTasks.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = taskAdapter
         }
 
-        // Setup Date RecyclerView
         val dateList = generateDateList()
-        dateAdapter = DateAdapter(dateList)
+        dateAdapter = DateAdapter(dateList) { selectedDate ->
+            loadTasksForDate(selectedDate)
+        }
+
         binding.recyclerViewDates.apply {
             layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
             adapter = dateAdapter
-            // Scroll ke tanggal hari ini
             val todayIndex = dateList.indexOfFirst { it.isSelected }
             if (todayIndex != -1) {
-                (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayIndex - 2, 0) // Center today's date
+                (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayIndex - 2, 0)
             }
         }
     }
@@ -116,13 +133,40 @@ class MainActivity : AppCompatActivity() {
         binding.textViewMonthYear.text = monthYearFormat.format(calendar.time)
     }
 
-    private fun observeTasks() {
-        // TODO: Nanti, filter tugas berdasarkan tanggal yang dipilih dari dateAdapter
-        db.taskDao().getAllTasks().observe(this) { tasks ->
+    // HAPUS fungsi observeTasks() yang lama, dan GANTI dengan ini
+    private fun loadTasksForDate(selectedDate: Date) {
+        // Atur kalender ke awal hari (00:00:00)
+        val startOfDay = Calendar.getInstance().apply {
+            time = selectedDate
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        // Atur kalender ke akhir hari (23:59:59)
+        val endOfDay = Calendar.getInstance().apply {
+            time = selectedDate
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+
+        // Panggil fungsi DAO yang baru dan observe hasilnya
+        db.taskDao().getTasksByDate(startOfDay.timeInMillis, endOfDay.timeInMillis).observe(this) { tasks ->
             tasks?.let {
                 taskAdapter.updateTasks(it)
                 checkEmptyView(it)
             }
+        }
+    }
+
+    private fun updateTask(task: Task) {
+        lifecycleScope.launch {
+            db.taskDao().updateTask(task)
+            // Toast opsional untuk memberi tahu user
+            Toast.makeText(this@MainActivity, "Status '${task.title}' diperbarui", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -182,62 +226,129 @@ class MainActivity : AppCompatActivity() {
 
     // Fungsi applyTheme dan setupThemeToggleButton dihapus karena tombolnya sudah tidak ada.
 
+    // Pastikan impor di atas sudah diubah ke com.google.android.material.dialog.MaterialAlertDialogBuilder
+
     private fun showAddTaskDialog() {
         selectedSoundUri = null
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_task, null)
+
+        val textViewSelectDate = dialogView.findViewById<android.widget.TextView>(R.id.textViewSelectDate)
         val editTextTaskTitle = dialogView.findViewById<EditText>(R.id.editTextTaskTitle)
+        val textViewStartTime = dialogView.findViewById<android.widget.TextView>(R.id.textViewStartTime)
+        val textViewEndTime = dialogView.findViewById<android.widget.TextView>(R.id.textViewEndTime)
         val buttonSelectSound = dialogView.findViewById<Button>(R.id.buttonSelectSound)
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Tambah Jadwal Baru")
-            .setView(dialogView)
-            .setPositiveButton("Simpan", null)
-            .setNegativeButton("Batal", null)
-            .create()
+
+        // 1. Hubungkan TextView dari dialog ke variabel class
+        soundSelectionTextView = dialogView.findViewById(R.id.textViewSoundSelected)
+        // Atur teks awal, jaga-jaga jika pengguna tidak memilih lagu baru
+        soundSelectionTextView?.text = "Nada: Default"
+
+        val taskDateCalendar = Calendar.getInstance()
+        val startCalendar = Calendar.getInstance()
+        val endCalendar = Calendar.getInstance()
+
+        val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+        textViewSelectDate.text = dateFormat.format(taskDateCalendar.time)
+
+        textViewSelectDate.setOnClickListener {
+            DatePickerDialog(this, { _, year, month, dayOfMonth ->
+                taskDateCalendar.set(Calendar.YEAR, year)
+                taskDateCalendar.set(Calendar.MONTH, month)
+                taskDateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                textViewSelectDate.text = dateFormat.format(taskDateCalendar.time)
+            }, taskDateCalendar.get(Calendar.YEAR), taskDateCalendar.get(Calendar.MONTH), taskDateCalendar.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        textViewStartTime.setOnClickListener {
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                startCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                startCalendar.set(Calendar.MINUTE, minute)
+                textViewStartTime.text = timeFormat.format(startCalendar.time)
+            }, startCalendar.get(Calendar.HOUR_OF_DAY), startCalendar.get(Calendar.MINUTE), true).show()
+        }
+
+        textViewEndTime.setOnClickListener {
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                endCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                endCalendar.set(Calendar.MINUTE, minute)
+                textViewEndTime.text = timeFormat.format(endCalendar.time)
+            }, endCalendar.get(Calendar.HOUR_OF_DAY), endCalendar.get(Calendar.MINUTE), true).show()
+        }
+
         buttonSelectSound.setOnClickListener {
             askForStoragePermissionAndPickAudio()
         }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .setPositiveButton("Add", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        // 2. Penting: Bersihkan referensi saat dialog ditutup
+        dialog.setOnDismissListener {
+            soundSelectionTextView = null
+        }
+
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
                 val taskTitle = editTextTaskTitle.text.toString()
+
                 if (taskTitle.isBlank()) {
-                    Toast.makeText(this, "Judul tidak boleh kosong", Toast.LENGTH_SHORT).show()
-                } else {
-                    pickDateTime(taskTitle, selectedSoundUri)
-                    dialog.dismiss()
+                    Toast.makeText(this, "Task Name tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
                 }
+                if (textViewStartTime.text.contains("Pilih") || textViewEndTime.text.contains("Pilih")) {
+                    Toast.makeText(this, "Silakan pilih waktu mulai dan selesai", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                startCalendar.set(
+                    taskDateCalendar.get(Calendar.YEAR),
+                    taskDateCalendar.get(Calendar.MONTH),
+                    taskDateCalendar.get(Calendar.DAY_OF_MONTH)
+                )
+                endCalendar.set(
+                    taskDateCalendar.get(Calendar.YEAR),
+                    taskDateCalendar.get(Calendar.MONTH),
+                    taskDateCalendar.get(Calendar.DAY_OF_MONTH)
+                )
+
+                if (endCalendar.timeInMillis <= startCalendar.timeInMillis) {
+                    Toast.makeText(this, "Waktu selesai harus setelah waktu mulai", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val durationString = calculateDurationString(startCalendar, endCalendar)
+
+                val newTask = Task(
+                    title = taskTitle,
+                    timestamp = startCalendar.timeInMillis,
+                    soundUri = selectedSoundUri?.toString(),
+                    status = "Upcoming",
+                    duration = durationString
+                )
+
+                addTask(newTask)
+                dialog.dismiss() // Ini akan memicu OnDismissListener
             }
         }
         dialog.show()
     }
+    private fun calculateDurationString(start: Calendar, end: Calendar): String {
+        val diff = end.timeInMillis - start.timeInMillis
+        val minutes = diff / (1000 * 60)
+        val hours = minutes / 60
+        val remainingMinutes = minutes % 60
 
-    private fun pickDateTime(taskTitle: String, soundUri: Uri?) {
-        val calendar = Calendar.getInstance()
-        DatePickerDialog(this, { _, year, month, dayOfMonth ->
-            calendar.set(Calendar.YEAR, year)
-            calendar.set(Calendar.MONTH, month)
-            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-
-            TimePickerDialog(this, { _, hourOfDay, minute ->
-                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                calendar.set(Calendar.MINUTE, minute)
-                calendar.set(Calendar.SECOND, 0)
-
-                if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                    Toast.makeText(this, "Waktu yang dipilih sudah lewat", Toast.LENGTH_SHORT).show()
-                    return@TimePickerDialog
-                }
-
-                // Error status & duration diperbaiki: Memberikan nilai default
-                val newTask = Task(
-                    title = taskTitle,
-                    timestamp = calendar.timeInMillis,
-                    soundUri = soundUri?.toString(),
-                    status = "Upcoming",
-                    duration = "1.5 Hours" // Anda bisa menambahkan input untuk durasi di dialog
-                )
-                addTask(newTask)
-            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        return when {
+            hours > 0 && remainingMinutes > 0 -> "$hours Hours $remainingMinutes Minutes"
+            hours > 0 -> "$hours Hours"
+            else -> "$minutes Minutes"
+        }
     }
 
     private fun askForNotificationPermission() {
@@ -260,7 +371,8 @@ class MainActivity : AppCompatActivity() {
                 selectAudioLauncher.launch(arrayOf("audio/*"))
             }
             shouldShowRequestPermissionRationale(permission) -> {
-                AlertDialog.Builder(this)
+                // PERBAIKAN DI SINI
+                MaterialAlertDialogBuilder(this)
                     .setTitle("Izin Penyimpanan Diperlukan")
                     .setMessage("Aplikasi ini memerlukan izin untuk mengakses file audio agar dapat dijadikan nada alarm.")
                     .setPositiveButton("OK") { _, _ -> requestPermissionLauncher.launch(permission) }
