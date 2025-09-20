@@ -31,6 +31,18 @@
             app:tint="@color/white" />
 
         <ImageButton
+            android:id="@+id/button_toggle_theme"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Ubah Tema"
+            android:padding="12dp"
+            android:src="@drawable/ic_light_mode"
+            app:layout_constraintEnd_toStartOf="@id/button_add_task_header"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/white" />
+
+        <ImageButton
             android:id="@+id/button_add_task_header"
             android:layout_width="48dp"
             android:layout_height="48dp"
